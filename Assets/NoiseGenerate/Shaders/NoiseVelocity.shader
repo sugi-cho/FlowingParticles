@@ -4,6 +4,7 @@
 	{
 		_MainTex ("Texture", 2D) = "white" {}
 		_Scale ("noise scale", Float) = 0.1
+		_Speed ("speed", Float) = 1
 	}
 	CGINCLUDE
 		#include "UnityCG.cginc"
@@ -32,7 +33,7 @@
 			_Pos;
 		sampler2D _MainTex;
 		float4 _MainTex_ST;
-		float _Scale;
+		float _Scale,_Speed;
 		
 		v2f vert (appdata v)
 		{
@@ -47,7 +48,7 @@
 			pOut o;
 			o.vel = 0;
 			o.pos = half4(i.uv,0,1);
-			o.pos.xy = normalize(o.pos.xy-0.5) * max(abs(o.pos.x-0.5),abs(o.pos.y-0.5))*5;
+			o.pos.xy = normalize(o.pos.xy-0.5) * max(abs(o.pos.x-0.5),abs(o.pos.y-0.5))*20;
 			return o;
 		}
 		pOut fragUpdate (v2f i)
@@ -57,6 +58,7 @@
 				pos = tex2D(_Pos, i.uv),
 				noise = tex2D(_NoiseTex, frac(pos.xy*_Scale));
 			vel.xy = noise.xy*(i.uv*0.5+0.5);
+			vel.xy *= _Speed;
 			pos += vel*unity_DeltaTime.x;
 			pos *= 0.999;
 			

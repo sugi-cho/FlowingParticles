@@ -38,7 +38,6 @@
 			half3 pos = tex2D(_Pos, uv).xyz;
 			half4 vel = tex2D(_Vel, uv);
 			v.vertex.xyz += pos;
-			v.color = vel*0.5+0.5;
 			
 			float4 vPos = vPosBillboard(v.vertex, v.uv, _Size);
 			

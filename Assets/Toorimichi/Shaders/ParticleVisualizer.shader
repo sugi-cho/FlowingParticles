@@ -1,4 +1,4 @@
-﻿Shader "Unlit/Particle"
+﻿Shader "Unlit/ParticleVisualizer"
 {
 	Properties
 	{
@@ -25,7 +25,13 @@
 			half4 color : TEXCOORD1;
 		};
 		
-		uniform sampler2D _Pos,_Vel;
+		struct pOut
+		{
+			float4 vis : SV_Target0;
+			float4 kage : SV_Target1;
+		};
+		
+		uniform sampler2D _Pos,_Vel,_Col;
 		uniform int _MRT_TexSize, _Offset;
 		sampler2D _MainTex;
 		float4 _MainTex_ST;
@@ -35,9 +41,12 @@
 		{
 			float id = floor(v.uv2.x) + _Offset;
 			float2 uv = float2(frac(id/_MRT_TexSize),id/_MRT_TexSize/_MRT_TexSize);
-			half3 pos = tex2D(_Pos, uv).xyz;
+			half4 pos = tex2D(_Pos, uv);
 			half4 vel = tex2D(_Vel, uv);
-			v.vertex.xyz += pos;
+			half4 col = tex2D(_Col, uv);
+			
+			v.vertex.xyz += pos.xyz;
+			v.color = col;
 			
 			float4 vPos = vPosBillboard(v.vertex, v.uv, _Size);
 			
@@ -48,17 +57,18 @@
 			return o;
 		}
 		
-		fixed4 frag (v2f i) : SV_Target
+		pOut frag (v2f i)
 		{
-			fixed4 col = i.color;
-			col.a = tex2D(_MainTex, i.uv).r;
-			return col;
+			pOut o;
+			o.vis = tex2D(_MainTex, i.uv)*i.color;
+			o.kage = 0.5-distance(float2(0.5,0.5),i.uv);
+			return o;
 		}
 	ENDCG
 	SubShader
 	{
 		ZTest Always ZWrite Off
-		Blend SrcAlpha OneMinusSrcAlpha
+		Blend One One
 		Pass
 		{
 			CGPROGRAM

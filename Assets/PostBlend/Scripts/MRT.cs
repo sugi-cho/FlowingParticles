@@ -4,7 +4,7 @@ using System.Collections;
 public class MRT : MonoBehaviour
 {
 
-	public string[] bufferNames;
+	public string[] bufferNames = new string[4]{"_Tex0","_Tex1","_Tex2","_Tex3"};
 	public string depthBufferName = "_PostBlendDepth";
 	public Material clearMat;
 	public Material compMat;
@@ -20,33 +20,33 @@ public class MRT : MonoBehaviour
 	RenderTexture
 		dRt;
 	RenderBuffer[] buffers;
-	Camera camera;
+	Camera cam;
 	Vector4 rectProp;
 
 	// Use this for initialization
 	void Start ()
 	{
-		camera = GetComponent<Camera> ();
-		camera.hdr = true;
+		cam = GetComponent<Camera> ();
+		cam.hdr = true;
 		rts = new RenderTexture[bufferNames.Length];
 		buffers = new RenderBuffer[bufferNames.Length];
 		for (int i = 0; i < rts.Length; i++) {
-			rts [i] = new RenderTexture ((int)camera.pixelWidth, (int)camera.pixelHeight, 0, RenderTextureFormat.ARGBHalf);
+			rts [i] = new RenderTexture ((int)cam.pixelWidth, (int)cam.pixelHeight, 0, RenderTextureFormat.ARGBHalf);
 			rts [i].filterMode = FilterMode.Point;
 			rts [i].name = bufferNames [i];
 			rts [i].Create ();
 			buffers [i] = rts [i].colorBuffer;
 		}
-		dRt = new RenderTexture ((int)camera.pixelWidth, (int)camera.pixelHeight, 24, RenderTextureFormat.Depth);
+		dRt = new RenderTexture ((int)cam.pixelWidth, (int)cam.pixelHeight, 24, RenderTextureFormat.Depth);
 		dRt.name = depthBufferName;
 
-		output = new RenderTexture ((int)camera.pixelWidth, (int)camera.pixelHeight, 24, RenderTextureFormat.ARGBHalf);
+		output = new RenderTexture ((int)cam.pixelWidth, (int)cam.pixelHeight, 24, RenderTextureFormat.ARGBHalf);
 		output.name = "_CompMRT" + name;
 		Shader.SetGlobalTexture (output.name, output);
 
-		camera.SetTargetBuffers (buffers, dRt.depthBuffer);
-		rectProp = new Vector4 (camera.rect.xMin, camera.rect.yMin, camera.rect.xMax, camera.rect.yMax);
-		camera.rect = Rect.MinMaxRect (0, 0, 1f, 1f);
+		cam.SetTargetBuffers (buffers, dRt.depthBuffer);
+		rectProp = new Vector4 (cam.rect.xMin, cam.rect.yMin, cam.rect.xMax, cam.rect.yMax);
+		cam.rect = Rect.MinMaxRect (0, 0, 1f, 1f);
 	}
 	void OnDestroy ()
 	{
@@ -61,12 +61,14 @@ public class MRT : MonoBehaviour
 		Graphics.SetRenderTarget (buffers, dRt.depthBuffer);
 		if (clearMat != null)
 			clearMat.DrawFullscreenQuad ();
-//		camera.SetTargetBuffers (buffers, dRt.depthBuffer);
+//		cam.SetTargetBuffers (buffers, dRt.depthBuffer);
 	}
 
 	void OnPostRender ()
 	{
 		Graphics.SetRenderTarget (null);
+		if (compMat == null)
+			return;
 		foreach (var rt in rts)
 			compMat.SetTexture (rt.name, rt);
 		compMat.SetTexture (dRt.name, dRt);

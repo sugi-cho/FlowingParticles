@@ -2,9 +2,9 @@
 {
 	Properties
 	{
-		_MainTex ("Texture", 2D) = "white" {}
 		_Scale ("noise scale", Float) = 0.1
 		_Speed ("speed", Float) = 1
+		_Tex ("texture", 2D) = "white"{}
 	}
 	CGINCLUDE
 		#include "UnityCG.cginc"
@@ -23,16 +23,16 @@
 		
 		struct pOut
 		{
-			half4 vel : SV_Target0;
-			half4 pos : SV_Target1;
+			float4 vel : SV_Target0;
+			float4 pos : SV_Target1;
 		};
 
 		uniform sampler2D
 			_NoiseTex,
 			_Vel,
-			_Pos;
-		sampler2D _MainTex;
-		float4 _MainTex_ST;
+			_Pos,
+			_Tex;
+		uniform float4x4 _MATRIX_VP;
 		float _Scale,_Speed;
 		
 		v2f vert (appdata v)
@@ -43,24 +43,44 @@
 			return o;
 		}
 		
+		float2 sUV(float3 wPos){
+			float4 sPos = mul(_MATRIX_VP, float4(wPos,1));
+			sPos = ComputeScreenPos(sPos);
+			return sPos.xy/sPos.w;
+		}
 		pOut fragInit (v2f i)
 		{
 			pOut o;
 			o.vel = 0;
-			o.pos = half4(i.uv,0,1);
+			o.pos = float4(i.uv,0,1);
 			o.pos.xy = normalize(o.pos.xy-0.5) * max(abs(o.pos.x-0.5),abs(o.pos.y-0.5))*20;
 			return o;
 		}
 		pOut fragUpdate (v2f i)
 		{
-			half4
+			float4
 				vel = tex2D(_Vel, i.uv),
 				pos = tex2D(_Pos, i.uv),
 				noise = tex2D(_NoiseTex, frac(pos.xy*_Scale));
-			vel.xy = noise.xy*(i.uv*0.5+0.5);
-			vel.xy *= _Speed;
+			vel -= pos;
+			vel *= saturate(2-length(tex2D(_Tex,saturate(sUV(pos.xyz))).rgb))*0.5;
 			pos += vel*unity_DeltaTime.x;
-			pos *= 0.999;
+			
+			pOut o;
+			o.vel = half4(vel.rgb,1);
+			o.pos = half4(pos.rgb,1);
+			return o;
+		}
+		pOut fragCurl (v2f i)
+		{
+			float4
+				vel = tex2D(_Vel, i.uv),
+				pos = tex2D(_Pos, i.uv),
+				noise = tex2D(_NoiseTex, frac(pos.xy*_Scale));
+			
+			float2 curl = noise.xy*(i.uv*0.75+0.25);
+			curl *= _Speed * saturate(1.5-length(tex2D(_Tex,saturate(sUV(pos.xyz))).rgb));
+			pos.xy += curl*unity_DeltaTime.x;
 			
 			pOut o;
 			o.vel = half4(vel.rgb,1);
@@ -86,6 +106,15 @@
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment fragUpdate
+			#pragma target 3.0
+			
+			ENDCG
+		}
+		Pass
+		{
+			CGPROGRAM
+			#pragma vertex vert
+			#pragma fragment fragCurl
 			#pragma target 3.0
 			
 			ENDCG

@@ -8,6 +8,7 @@
 		_Life ("life time", Float) = 30
 		
 		_Emit ("emit tex", 2D) = "black"{}
+		_EmitRate ("particles per sec", Float) = 0.1
 	}
 	CGINCLUDE
 		#include "UnityCG.cginc"
@@ -36,10 +37,12 @@
 			_NoiseTex,
 			_Vel,
 			_Pos,
+			_Col,
 			_Emit,
 			_Kage;
 		uniform float4x4 _MATRIX_VP;
-		float _Scale,_Speed,_Life;
+		uniform float _MRT_TexSize;
+		float _Scale,_Speed,_Life,_EmitRate;
 		float4 _EmitPos;
 		
 		v2f vert (appdata v)
@@ -56,36 +59,49 @@
 			return sPos.xy/sPos.w;
 		}
 		
+		float colorRate(float t){
+			return saturate(t)*saturate(_Life-t);
+		}
+		float2 fullPos(float2 uv, float rad, float t)
+		{
+			float x = uv.x + frac(t/_MRT_TexSize);
+			float y = uv.y + t/_MRT_TexSize/_MRT_TexSize;
+			uv = frac(float2(x,y));
+			return normalize(uv-0.5) * max(abs(uv.x-0.5),abs(uv.y-0.5)) * rad;
+		}
 		pOut fragInit (v2f i)
 		{
 			pOut o;
 			o.vel = 0;
-			o.pos = float4(i.uv,0,_Life);
-			o.pos.xy = normalize(o.pos.xy-0.5) * max(abs(o.pos.x-0.5),abs(o.pos.y-0.5)) * 20;
+			o.pos = float4(fullPos(i.uv,20,0),0,-rand(i.uv)*_Life);
+			o.col = 0;
 			return o;
 		}
 		pOut fragEmit(v2f i)
 		{
 			float4
 				vel = tex2D(_Vel, i.uv),
-				pos = tex2D(_Pos, i.uv);
+				pos = tex2D(_Pos, i.uv),
+				col = tex2D(_Col, i.uv);
 			float life = pos.w;
 			
-			float2 emitPos = float2(rand(i.uv.xy+_Time.x),rand(i.uv.yx+_Time.x));
-			emitPos = emitPos * _EmitPos.xy - _EmitPos.xy*0.5;
-//			float4 emi = tex2D(_Emit, sUV(float3(emitPos,0)));
-			float4 emi = tex2D(_Emit, emitPos.xy*0.05);
+			float2 emitPos = fullPos(i.uv,20,_Time.y*_MRT_TexSize*_MRT_TexSize*_EmitRate);
+			float2 uv = sUV(float3(emitPos,0));
+			float4 emi = tex2D(_Emit, uv);
 			
-//			if(life < 0){
-				pos.xy = emitPos;
-//				if(0.5 < emi.r)
-					pos.w = float4(emitPos,0,_Life);
-//			}	
+			if(life < 0)
+			if(0<min(uv.x,uv.y))
+			if(max(uv.x,uv.y)<1)
+			if(0.5 < emi.r){
+				pos = float4(emitPos,0,_Life);
+				col = emi;
+			}
+			
 			
 			pOut o;
 			o.vel = vel;
 			o.pos = pos;
-			o.col = emi;
+			o.col = col;
 			return o;
 		}
 		pOut fragUpdate (v2f i)
@@ -93,16 +109,18 @@
 			float4
 				vel = tex2D(_Vel, i.uv),
 				pos = tex2D(_Pos, i.uv),
+				col = tex2D(_Col, i.uv),
 				noise = tex2D(_NoiseTex, frac(pos.xy*_Scale));
 				
 //			vel.y += rand(i.uv)*0.1;
 			pos.xy += vel.xy*unity_DeltaTime.x*saturate(pos.w);
 			pos.w -= unity_DeltaTime.x;
+			col = lerp(float4(0,0,0,1),float4(1,1,1,1),colorRate(pos.w));
 			
 			pOut o;
 			o.vel = vel;
 			o.pos = pos;
-			o.col = 1;
+			o.col = col;
 			return o;
 		}
 		pOut fragCurl (v2f i)
@@ -110,6 +128,7 @@
 			float4
 				vel = tex2D(_Vel, i.uv),
 				pos = tex2D(_Pos, i.uv),
+				col = tex2D(_Col, i.uv),
 				noise = tex2D(_NoiseTex, frac(pos.xy*_Scale));
 			
 			float2 curl = noise.xy*(i.uv*0.75+0.25);
@@ -119,7 +138,7 @@
 			pOut o;
 			o.vel = vel;
 			o.pos = pos;
-			o.col = 1;
+			o.col = col;
 			return o;
 		}
 	ENDCG

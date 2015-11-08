@@ -7,8 +7,6 @@ public class MRT : MonoBehaviour
 	public string[] bufferNames = new string[4]{"_Tex0","_Tex1","_Tex2","_Tex3"};
 	public string depthBufferName = "_PostBlendDepth";
 	public Material clearMat;
-	public Material compMat;
-//	public RenderTexture output;
 	public OutputProp[] outputs;
 
 	public bool showTex;
@@ -74,14 +72,8 @@ public class MRT : MonoBehaviour
 	void OnPostRender ()
 	{
 		Graphics.SetRenderTarget (null);
-		if (compMat == null)
-			return;
-		foreach (var rt in rts)
-			compMat.SetTexture (rt.name, rt);
-		compMat.SetTexture (dRt.name, dRt);
-		compMat.SetVector ("_CamRect", rectProp);
 		foreach (var output in outputs)
-			output.Render ();
+			output.Render (rts, dRt);
 
 	}
 
@@ -109,10 +101,13 @@ public class MRT : MonoBehaviour
 			output.name = propName;
 			Shader.SetGlobalTexture (output.name, output);
 		}
-		public void Render ()
+		public void Render (RenderTexture[] rts, RenderTexture dRt)
 		{
 			if (output == null)
 				Init ();
+			foreach (var rt in rts)
+				mat.SetTexture (rt.name, rt);
+			mat.SetTexture (dRt.name, dRt);
 			Graphics.Blit (null, output, mat);
 		}
 	}

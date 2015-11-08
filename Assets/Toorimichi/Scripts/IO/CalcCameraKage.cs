@@ -9,7 +9,7 @@ public class CalcCameraKage : MonoBehaviour
 	public float deltaCheck = 0.05f;
 	public int width = 736, height = 480;
 
-	public string propName = "_CameraKage";
+	public string propNameK = "_CameraKage";
 	public Material processMat;
 	
 	[SerializeField]
@@ -27,7 +27,11 @@ public class CalcCameraKage : MonoBehaviour
 		InvokeRepeating ("Check", deltaCheck, deltaCheck);
 		texture = new Texture2D (width, height, TextureFormat.ARGB32, false);
 		output = Extensions.CreateRenderTexture (width, height);
-		Shader.SetGlobalTexture (propName, output);
+		Shader.SetGlobalTexture (propNameK, output);
+	}
+	void OnDestroy ()
+	{
+		Extensions.ReleaseRenderTexture (output);
 	}
 	
 	void Check ()
@@ -39,14 +43,13 @@ public class CalcCameraKage : MonoBehaviour
 				fileName = newFile;
 				var bytes = File.ReadAllBytes (fileName);
 				texture.LoadImage (bytes);
-				ProcessTexture ();
 			}
 		} catch {
 			Debug.Log ("network error");
 		}
 	}
 
-	void ProcessTexture ()
+	void Update ()
 	{
 		if (processMat != null)
 			Graphics.Blit (texture, output, processMat);

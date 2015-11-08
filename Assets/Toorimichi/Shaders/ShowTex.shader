@@ -27,12 +27,12 @@
 			return o;
 		}
 		
-		uniform sampler2D _VisTex, _KageTex,_FlowTex;
+		uniform sampler2D _VisTex, _KageTex,_FlowTex,_CompTex;
 		sampler2D _MainTex;
 
 		fixed4 frag (v2f i) : SV_Target
 		{
-			fixed4 col = tex2D(_FlowTex, i.uv);
+			fixed4 col = tex2D(_CompTex, i.uv);
 			return col;
 		}
 	ENDCG

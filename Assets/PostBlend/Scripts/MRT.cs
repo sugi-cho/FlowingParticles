@@ -8,7 +8,8 @@ public class MRT : MonoBehaviour
 	public string depthBufferName = "_PostBlendDepth";
 	public Material clearMat;
 	public Material compMat;
-	public RenderTexture output;
+//	public RenderTexture output;
+	public OutputProp[] outputs;
 
 	public bool showTex;
 	public bool write2out;
@@ -28,10 +29,11 @@ public class MRT : MonoBehaviour
 	{
 		cam = GetComponent<Camera> ();
 		cam.hdr = true;
+		
 		rts = new RenderTexture[bufferNames.Length];
 		buffers = new RenderBuffer[bufferNames.Length];
 		for (int i = 0; i < rts.Length; i++) {
-			rts [i] = new RenderTexture ((int)cam.pixelWidth, (int)cam.pixelHeight, 0, RenderTextureFormat.ARGBHalf);
+			rts [i] = new RenderTexture ((int)cam.pixelWidth, (int)cam.pixelHeight, 0, RenderTextureFormat.ARGBFloat);
 			rts [i].filterMode = FilterMode.Point;
 			rts [i].name = bufferNames [i];
 			rts [i].Create ();
@@ -39,29 +41,34 @@ public class MRT : MonoBehaviour
 		}
 		dRt = new RenderTexture ((int)cam.pixelWidth, (int)cam.pixelHeight, 24, RenderTextureFormat.Depth);
 		dRt.name = depthBufferName;
-
-		output = new RenderTexture ((int)cam.pixelWidth, (int)cam.pixelHeight, 24, RenderTextureFormat.ARGBHalf);
-		output.name = "_CompMRT" + name;
-		Shader.SetGlobalTexture (output.name, output);
-
+		
+//		output = new RenderTexture ((int)cam.pixelWidth, (int)cam.pixelHeight, 24, RenderTextureFormat.ARGBFloat);
+//		output.name = "_CompMRT" + name;
+//		Shader.SetGlobalTexture (output.name, output);
+		
 		cam.SetTargetBuffers (buffers, dRt.depthBuffer);
+
 		rectProp = new Vector4 (cam.rect.xMin, cam.rect.yMin, cam.rect.xMax, cam.rect.yMax);
 		cam.rect = Rect.MinMaxRect (0, 0, 1f, 1f);
 	}
 	void OnDestroy ()
 	{
-		for (int i = 0; i < rts.Length; i++) 
-			Extensions.ReleaseRenderTexture (rts [i]);
-
+		ReleaseRenderTextures ();
 	}
 
+	void ReleaseRenderTextures ()
+	{
+		for (int i = 0; i < rts.Length; i++) 
+			Extensions.ReleaseRenderTexture (rts [i]);
+		Extensions.ReleaseRenderTexture (dRt);
+//		Extensions.ReleaseRenderTexture (output);
+	}
 	
 	void OnPreRender ()
 	{
 		Graphics.SetRenderTarget (buffers, dRt.depthBuffer);
 		if (clearMat != null)
 			clearMat.DrawFullscreenQuad ();
-//		cam.SetTargetBuffers (buffers, dRt.depthBuffer);
 	}
 
 	void OnPostRender ()
@@ -73,10 +80,9 @@ public class MRT : MonoBehaviour
 			compMat.SetTexture (rt.name, rt);
 		compMat.SetTexture (dRt.name, dRt);
 		compMat.SetVector ("_CamRect", rectProp);
-		if (write2out)
-			Graphics.Blit (null, output, compMat);
-		else
-			Graphics.Blit (null, compMat);
+		foreach (var output in outputs)
+			output.Render ();
+
 	}
 
 	void OnGUI ()
@@ -89,5 +95,25 @@ public class MRT : MonoBehaviour
 			GUILayout.Label (t, GUILayout.Height (50));
 		}
 		GUILayout.EndVertical ();
+	}
+	[System.Serializable]
+	public class OutputProp
+	{
+		public Material mat;
+		public RenderTexture output;
+		public string propName;
+
+		void Init ()
+		{
+			output = new RenderTexture (Screen.width, Screen.height, 24, RenderTextureFormat.ARGBFloat);
+			output.name = propName;
+			Shader.SetGlobalTexture (output.name, output);
+		}
+		public void Render ()
+		{
+			if (output == null)
+				Init ();
+			Graphics.Blit (null, output, mat);
+		}
 	}
 }

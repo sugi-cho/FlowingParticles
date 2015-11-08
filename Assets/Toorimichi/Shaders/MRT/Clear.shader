@@ -20,7 +20,7 @@
 			float4 kage : SV_Target1;
 		};
 		
-		uniform sampler2D _KageTex;
+		uniform sampler2D _CameraKage,_KageTex;
 		
 		v2f vert (appdata v)
 		{
@@ -34,7 +34,7 @@
 		{
 			pOut o;
 			o.vis = 0;
-			o.kage = tex2D(_KageTex, i.uv);
+			o.kage = tex2D(_CameraKage, i.uv);
 			return o;
 		}
 	ENDCG

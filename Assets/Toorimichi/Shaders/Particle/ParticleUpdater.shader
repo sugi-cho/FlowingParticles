@@ -4,7 +4,6 @@
 	{
 		_Scale ("curl scale", Float) = 0.1
 		_Speed ("curl speed", Float) = 1
-		_EmitPos ("emit pos(minX,minY,maxX,maxY)", Vector) = (-10,-10,10,10)
 		_Life ("life time", Float) = 30
 		
 		_Emit ("emit tex", 2D) = "black"{}
@@ -43,7 +42,6 @@
 		uniform float4x4 _MATRIX_VP;
 		uniform float _MRT_TexSize;
 		float _Scale,_Speed,_Life,_EmitRate;
-		float4 _EmitPos;
 		
 		v2f vert (appdata v)
 		{
@@ -90,6 +88,7 @@
 			float4 emi = tex2D(_Emit, uv);
 			
 			if(life < 0)
+			if(0.9<frac(life))
 			if(0<min(uv.x,uv.y))
 			if(max(uv.x,uv.y)<1)
 			if(0.5 < emi.r){

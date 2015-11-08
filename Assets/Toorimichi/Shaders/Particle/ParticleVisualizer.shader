@@ -4,6 +4,7 @@
 	{
 		_MainTex ("Texture", 2D) = "white" {}
 		_Size ("size", Float) = 0.1
+		_Sepa ("separate", Float) = 2
 	}
 	CGINCLUDE
 		#include "UnityCG.cginc"
@@ -35,7 +36,7 @@
 		uniform int _MRT_TexSize, _Offset;
 		sampler2D _MainTex;
 		float4 _MainTex_ST;
-		float _Size;
+		float _Size,_Sepa;
 		
 		v2f vert (appdata v)
 		{
@@ -48,7 +49,7 @@
 			v.vertex.xyz += pos.xyz;
 			v.color = col;
 			
-			float4 vPos = vPosBillboard(v.vertex, v.uv, _Size);
+			float4 vPos = vPosBillboard(v.vertex, v.uv, _Size*_Sepa*saturate(pos.w));
 			
 			v2f o;
 			o.vertex = mul(UNITY_MATRIX_P, vPos);
@@ -59,9 +60,16 @@
 		
 		pOut frag (v2f i)
 		{
+			float2 uv = i.uv;
+			uv -= 0.5;
+			uv *= _Sepa;
+			uv += 0.5;
+			uv = saturate(uv);
+			
 			pOut o;
-			o.vis = tex2D(_MainTex, i.uv)*i.color;
-			o.kage = 0.5-distance(float2(0.5,0.5),i.uv);
+			o.vis = tex2D(_MainTex, uv)*i.color;
+			o.kage = distance(float2(0.5,0.5),i.uv);
+			o.kage = saturate(0.25 - o.kage*o.kage)*0.1;
 			return o;
 		}
 	ENDCG

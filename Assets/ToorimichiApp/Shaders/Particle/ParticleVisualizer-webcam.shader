@@ -43,9 +43,9 @@
 		{
 			float id = floor(v.uv2.x) + _Offset;
 			float2 uv = float2(frac(id/_MRT_TexSize),id/_MRT_TexSize/_MRT_TexSize);
-			half4 pos = tex2D(_Pos, uv);
-			half4 vel = tex2D(_Vel, uv);
-			half4 col = tex2D(_Col, uv);
+			half4 pos = tex2Dlod(_Pos, float4(uv,0,0));
+			half4 vel = tex2Dlod(_Vel, float4(uv,0,0));
+			half4 col = tex2Dlod(_Col, float4(uv,0,0));
 			
 			v.vertex.xyz += pos.xyz;
 			v.color = col;

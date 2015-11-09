@@ -13,10 +13,4 @@ public class Webcam : MonoBehaviour
 		Shader.SetGlobalTexture (propEmit, wc);
 		Shader.SetGlobalTexture (propKage, wc);
 	}
-	
-	// Update is called once per frame
-	void Update ()
-	{
-	
-	}
 }

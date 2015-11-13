@@ -49,7 +49,7 @@
 			
 			v.vertex.xyz += pos.xyz;
 			v.color = col;
-			v.color.a = pos.a/10;
+			v.color.a = pos.a/5;
 			
 			float4 vPos = vPosBillboard(v.vertex, v.uv, _Size*_Sepa*(pos.w>0));
 			

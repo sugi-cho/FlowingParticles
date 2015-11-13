@@ -49,8 +49,9 @@
 			
 			v.vertex.xyz += pos.xyz;
 			v.color = col;
+			v.color.a = pos.a/10;
 			
-			float4 vPos = vPosBillboard(v.vertex, v.uv, _Size*_Sepa*saturate(pos.w));
+			float4 vPos = vPosBillboard(v.vertex, v.uv, _Size*_Sepa*(pos.w>0));
 			
 			v2f o;
 			o.vertex = mul(UNITY_MATRIX_P, vPos);
@@ -69,7 +70,10 @@
 			uv = saturate(uv);
 			
 			pOut o;
-			o.vis = tex2D(_MainTex, uv)*i.color;
+			half tex = tex2D(_MainTex, uv).r;
+			o.vis = i.color*tex;
+//			o.vis.rgb *= o.vis.a;
+			
 			o.kage = distance(float2(0.5,0.5),i.uv);
 			o.kage = saturate(0.25 - o.kage*o.kage)*0.1;
 			return o;
@@ -78,7 +82,7 @@
 	SubShader
 	{
 		ZTest Always ZWrite Off
-		Blend One One
+		Blend SrcAlpha OneMinusSrcAlpha
 		Pass
 		{
 			CGPROGRAM

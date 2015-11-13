@@ -33,21 +33,21 @@
 				return o;
 			}
 			
-			uniform sampler2D _VisTex,_KageTex,_CameraKage;
+			uniform sampler2D _VisTex,_KageTex,_CameraKage,_CurlWebCam;
 			half4 _KageTex_TexelSize;
 
 			fixed4 frag (v2f i) : SV_Target
 			{
 //				return tex2D(_KageTex, i.uv);
 				half2 d = _KageTex_TexelSize.xy;
-				half4
-					col00 = tex2D(_KageTex, i.uv + float2(-d.x,-d.y)),
-					col01 = tex2D(_KageTex, i.uv + float2(-d.x, d.y)),
-					col10 = tex2D(_KageTex, i.uv + float2( d.x,-d.y)),
-					col11 = tex2D(_KageTex, i.uv + float2( d.x, d.y));
-				half4 col = half4(col00.x-col11.x, col10.y-col01.y,1,1);
-				return col;
-				return dot(normalize(col.xyz), normalize(float3(1,0.5,0.5)))*0.5+0.5;
+				half
+					col00 = (tex2D(_KageTex, i.uv + float2(-d.x,-d.y)).rgb),
+					col01 = (tex2D(_KageTex, i.uv + float2(-d.x, d.y)).rgb),
+					col10 = (tex2D(_KageTex, i.uv + float2( d.x,-d.y)).rgb),
+					col11 = (tex2D(_KageTex, i.uv + float2( d.x, d.y)).rgb);
+				half4 flow = half4((col10+col11 -col00-col01).r, (col01+col11 -col00-col10).r,0,0);
+				half4 cc = tex2D(_CurlWebCam, i.uv);
+				return -flow + cc*0.01;
 			}
 			ENDCG
 		}

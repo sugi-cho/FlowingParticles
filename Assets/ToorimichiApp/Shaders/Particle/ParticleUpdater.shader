@@ -92,7 +92,8 @@
 			if(0.95<frac(life))
 			if(0<min(uv.x,uv.y))
 			if(max(uv.x,uv.y)<1)
-			if(rand(uv+_Time.xy) < length(emi.rgb)*2){
+//			if(rand(uv+_Time.xy) < saturate(_Time.y*0.1)*6*pow(0.5-distance(uv,0.5),2)-0.5)
+			{
 				pos = float4(emitPos,0,_Life);
 				col = emi;
 			}
@@ -125,7 +126,7 @@
 			
 			pos.xy += vel.xy*unity_DeltaTime.x*saturate(pos.w);
 			pos.w -= unity_DeltaTime.x;
-			pos.w -= (1-kage)*unity_DeltaTime.x*10;
+//			pos.w -= (1-kage)*unity_DeltaTime.x*10;
 			col = col;
 			
 			pOut o;

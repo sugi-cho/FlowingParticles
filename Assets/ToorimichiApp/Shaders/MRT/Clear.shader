@@ -20,7 +20,7 @@
 			float4 kage : SV_Target1;
 		};
 		
-		uniform sampler2D _CameraKage,_KageTex;
+		uniform sampler2D _CameraKage,_KageTex,_Canvas;
 		
 		v2f vert (appdata v)
 		{

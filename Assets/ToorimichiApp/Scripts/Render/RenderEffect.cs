@@ -17,6 +17,8 @@ public class RenderEffect : MonoBehaviour
 	public TextureWrapMode wrapMode;
 	
 	[SerializeField]
+	RenderTexture
+		output;
 	RenderTexture[]
 		rts = new RenderTexture[2];
 	void Start ()
@@ -33,8 +35,8 @@ public class RenderEffect : MonoBehaviour
 			Graphics.Blit (rts [0], rts [1], m);
 			SwapRTs ();
 		}
-		
-		var output = rts [0];
+
+		Graphics.Blit (rts [0], output);
 		if (blur)
 			output.GetBlur (bSize, bItr, bDS);
 		Shader.SetGlobalTexture (propName, output);
@@ -52,6 +54,8 @@ public class RenderEffect : MonoBehaviour
 				rts [i] = Extensions.CreateRenderTexture (s, rt);
 				rts [i].wrapMode = wrapMode;
 			}
+			output = Extensions.CreateRenderTexture (s, output);
+			output.wrapMode = wrapMode;
 		}
 	}
 	

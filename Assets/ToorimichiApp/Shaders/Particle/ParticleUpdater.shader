@@ -137,15 +137,13 @@
 			
 			
 			float4
-				flow = tex2D(_FlowTex, uv),
-				kage = tex2D(_CameraKage, frac(uv));
-			vel.xy += flow.xy*_Sepa;
-			vel.xy *= 0.9;
+				flow = tex2D(_FlowTex, uv);
+			vel.xy = flow.xy*_Sepa;
 			pos.xy += vel.xy;
 			
 			pos.xy += vel.xy*unity_DeltaTime.x*saturate(pos.w);
 			pos.w -= unity_DeltaTime.x;
-//			pos.w -= (1-kage)*unity_DeltaTime.x*10;
+			
 			col = col;
 			
 			pOut o;
@@ -162,7 +160,7 @@
 				col = tex2D(_Col, i.uv),
 				noise = tex2D(_NoiseTex, pos.xy*_Scale);
 			
-			float2 curl = noise.xy*(i.uv*0.75+0.25);
+			float2 curl = noise.xy;
 			curl *= _Speed;
 			pos.xy += curl*unity_DeltaTime.x*saturate(pos.w);
 			

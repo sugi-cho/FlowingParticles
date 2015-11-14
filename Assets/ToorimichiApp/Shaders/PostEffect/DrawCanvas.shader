@@ -44,7 +44,7 @@
 			half4 canvas = tex2D(_Canvas, i.uv+flow);
 			half4 brush = tex2D(_MainTex, i.uv);
 			
-			canvas.rgb = lerp(canvas.rgb, brush.rgb*brush.rgb*2, saturate(brush.a*2));
+			canvas.rgb = lerp(canvas.rgb, brush.rgb*brush.rgb*2, saturate(brush.a*2)*0.5);
 			canvas.a += brush.a;
 			
 //			canvas.rgb = lerp(canvas.rgb, 0.0, unity_DeltaTime.x*0.1);
